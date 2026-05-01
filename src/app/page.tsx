@@ -15,6 +15,7 @@ import { WeatherBadgeInline, WeatherCard } from "@/components/WeatherBadge";
 import ActivityBanner from "@/components/ActivityBanner";
 import AchievementShowcase from "@/components/AchievementShowcase";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import LocationPermission from "@/components/LocationPermission";
 import BottomNav, { type Tab } from "@/components/BottomNav";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import TripsPage from "@/components/TripsPage";
@@ -97,7 +98,7 @@ export default function Home() {
   const [locationWeather, setLocationWeather] = useState<LocationWeather | null>(null);
 
   const { allTrips, completedTrips, saveTrip, deleteTrip } = useSavedTrips(auth.user?.id);
-  const { location: geoLocation } = useGeolocation();
+  const { location: geoLocation, needsPermission, requestPermission, denyPermission, error: geoError } = useGeolocation();
 
   useEffect(() => {
     if (!geoLocation) return;
@@ -216,6 +217,7 @@ export default function Home() {
 
   const [viewingSaved, setViewingSaved] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
+  const [showGpsPopup, setShowGpsPopup] = useState(false);
 
   const handleViewTrip = useCallback((trip: TripResultType, savedMissions: MissionStatus[]) => {
     setTripResult(trip);
@@ -460,6 +462,7 @@ export default function Home() {
               geoLat={geoLocation?.lat} geoLng={geoLocation?.lng}
               onAreaChange={setArea} onDurationChange={setDuration}
               onBudgetChange={setBudget} onTransportChange={setTransport} onPlacesCountChange={setPlacesCount}
+              onRequestGps={() => setShowGpsPopup(true)}
             />
 
             {/* Spacer for bottom nav */}
@@ -529,6 +532,15 @@ export default function Home() {
         myBadges={completedTrips.length}
         myCarbonG={0}
       />
+
+      {/* Location Permission Popup */}
+      {(needsPermission || showGpsPopup || (geoError === "blocked" && !geoLocation)) && (
+        <LocationPermission
+          onAllow={() => { setShowGpsPopup(false); requestPermission(); }}
+          onDeny={() => { setShowGpsPopup(false); denyPermission(); }}
+          blocked={geoError === "blocked"}
+        />
+      )}
     </div>
   );
 }

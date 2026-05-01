@@ -19,13 +19,14 @@ interface TripFormProps {
   onBudgetChange: (v: number) => void;
   onTransportChange: (v: string) => void;
   onPlacesCountChange: (v: number) => void;
+  onRequestGps?: () => void;
 }
 
 const placesOptions = [0, 3, 4, 5, 6, 7, 8];
 
 export default function TripForm({
   area, duration, budget, transport, placesCount, geoLat, geoLng,
-  onAreaChange, onDurationChange, onBudgetChange, onTransportChange, onPlacesCountChange,
+  onAreaChange, onDurationChange, onBudgetChange, onTransportChange, onPlacesCountChange, onRequestGps,
 }: TripFormProps) {
   const { t, transports } = useI18n();
 
@@ -33,7 +34,7 @@ export default function TripForm({
     <div className="space-y-4">
       {/* Area */}
       <div className="app-card p-4 animate-fade-in-up delay-1">
-        <AreaSelector value={area} onChange={onAreaChange} geoLat={geoLat} geoLng={geoLng} />
+        <AreaSelector value={area} onChange={onAreaChange} geoLat={geoLat} geoLng={geoLng} onRequestGps={onRequestGps} />
       </div>
 
       {/* Duration */}

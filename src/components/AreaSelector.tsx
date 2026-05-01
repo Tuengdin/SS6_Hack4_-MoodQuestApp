@@ -23,9 +23,10 @@ interface AreaSelectorProps {
   onChange: (v: AreaSelection) => void;
   geoLat?: number | null;
   geoLng?: number | null;
+  onRequestGps?: () => void;
 }
 
-export default function AreaSelector({ value, onChange, geoLat, geoLng }: AreaSelectorProps) {
+export default function AreaSelector({ value, onChange, geoLat, geoLng, onRequestGps }: AreaSelectorProps) {
   const { t, provinces, locale } = useI18n();
   const isEn = locale === "en";
   const [mode, setMode] = useState<AreaMode>(value.mode);
@@ -121,7 +122,15 @@ export default function AreaSelector({ value, onChange, geoLat, geoLng }: AreaSe
           ) : (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl" style={{ background: "#FEF3C7", color: "#92400E" }}>
               <Crosshair size={16} strokeWidth={2} />
-              <span className="text-[13px]">{isEn ? "Location not available — allow GPS" : "ไม่สามารถระบุตำแหน่ง — อนุญาต GPS"}</span>
+              <span className="text-[13px] flex-1">{isEn ? "Location not available" : "ไม่สามารถระบุตำแหน่งได้"}</span>
+              {onRequestGps && (
+                <button onClick={onRequestGps}
+                  className="pill-btn text-[11px] gap-1 flex-shrink-0"
+                  style={{ background: "#6366F1", color: "white", padding: "6px 12px" }}>
+                  <MapPin size={12} strokeWidth={2} />
+                  {isEn ? "Enable GPS" : "เปิด GPS"}
+                </button>
+              )}
             </div>
           )}
         </div>

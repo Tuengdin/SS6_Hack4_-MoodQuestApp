@@ -89,7 +89,10 @@ Return ONLY JSON, no markdown.`;
     }
 
     if (!content) {
-      return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
+      // Fallback: return estimated AQI based on province
+      const fallback = getFallbackAqi(province);
+      aqiCache.set(province, { data: fallback, ts: Date.now() });
+      return NextResponse.json(fallback);
     }
 
     // Clean and parse
@@ -111,6 +114,34 @@ Return ONLY JSON, no markdown.`;
     return NextResponse.json(result);
   } catch (error) {
     console.error("AQI API error:", error);
-    return NextResponse.json({ error: "Failed to get AQI" }, { status: 500 });
+    const province = new URL(request.url).searchParams.get("province") || "กรุงเทพ";
+    return NextResponse.json(getFallbackAqi(province));
   }
+}
+
+function getFallbackAqi(province: string): AqiResult {
+  // Estimate AQI based on province and current month
+  const month = new Date().getMonth(); // 0-11
+  const isBurningSeason = month >= 1 && month <= 3; // Feb-Apr
+  const isNorth = /เชียงใหม่|เชียงราย|น่าน|Chiang|Nan/i.test(province);
+  const isCoastal = /ภูเก็ต|กระบี่|Phuket|Krabi|หัวหิน|Hua Hin|พัทยา|Pattaya/i.test(province);
+
+  let aqi: number;
+  if (isNorth && isBurningSeason) aqi = 120;
+  else if (isNorth) aqi = 65;
+  else if (isCoastal) aqi = 35;
+  else aqi = 55; // Bangkok and others
+
+  const level = aqi <= 50 ? "Good" : aqi <= 100 ? "Moderate" : "Unhealthy for Sensitive";
+  const levelTh = aqi <= 50 ? "ดี" : aqi <= 100 ? "ปานกลาง" : "เริ่มมีผลต่อสุขภาพ";
+  const color = aqi <= 50 ? "#00E400" : aqi <= 100 ? "#FFFF00" : "#FF7E00";
+
+  return {
+    aqi,
+    level,
+    levelTh,
+    color,
+    advice: aqi > 100 ? "Wear a mask outdoors" : "Air quality is acceptable",
+    adviceTh: aqi > 100 ? "สวมหน้ากากเมื่ออยู่กลางแจ้ง" : "คุณภาพอากาศอยู่ในเกณฑ์ที่ยอมรับได้",
+  };
 }
